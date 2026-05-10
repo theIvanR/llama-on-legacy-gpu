@@ -9,7 +9,7 @@ LLama CPP on Cuda on Kepler GPUs
 
 
 0 Fetch Llama
-
+	```bash
 	@echo off
 	setlocal enabledelayedexpansion
 
@@ -59,6 +59,7 @@ LLama CPP on Cuda on Kepler GPUs
 	echo [SUCCESS] Latest llama.cpp fetched/updated successfully.
 	popd
 	pause
+	```
 
 1 Activate Environment and Build Llama
 - activat env
