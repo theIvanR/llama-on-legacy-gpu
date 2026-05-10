@@ -1,4 +1,4 @@
-LLama CPP on Cuda on Kepler GPUs
+# LLama CPP on cuda on legacy systems, kepler k40c focused
 
 ## 0: configure environment
 - install git
