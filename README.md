@@ -20,6 +20,7 @@
 - set desired gpu architectures (if multiple gpus) and run
   
 ## 3: Enjoy via WEB API
+- go to your build directory and run
 - download your models and set which to use. Open in browser. 
 	```bash
 	@echo off
