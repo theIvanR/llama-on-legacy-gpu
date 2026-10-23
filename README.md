@@ -7,15 +7,13 @@
 - install cuda 11.8
 - install cudnn 8.7.0 (drag and drop into nvidia)
 
+## 0 Fetch Patched llama.cpp repository
+- run: git clone https://github.com/ggml-org/llama.cpp/pull/30727
 
 ## 1 Fetch Llama
 - run "fetch_llama.cmd" from https://github.com/theIvanR/lmstudio-unlocked-backend/tree/main/Generate%20Backends/Windows
 
 ## 2 Activate Environment and Build Llama
-- activat env
-	```bash
-	call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" x64 -vcvars_ver=14.29
-	```
 - download builder "build_gpu_cuda.cmd" from https://github.com/theIvanR/lmstudio-unlocked-backend/tree/main/Generate%20Backends/Windows
 - set desired gpu architectures (if multiple gpus) and run
   
