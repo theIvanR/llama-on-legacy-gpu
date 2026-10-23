@@ -2,10 +2,9 @@
 
 ## 0: configure environment
 - install git
-- install visual studio (any) supporting v142, recommended 2022 with backwards tool.
+- install visual studio (any) supporting v142, recommended 2019
 - install driver 472.50
 - install cuda 11.8
-- install cudnn 8.7.0 (drag and drop into nvidia)
 
 ## 0 Fetch Patched llama.cpp repository
 - run: git clone https://github.com/ggml-org/llama.cpp/pull/30727
