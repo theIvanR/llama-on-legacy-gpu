@@ -35,7 +35,6 @@
 	  --mmproj "%MMPROJ%" ^
 	  --no-mmproj-offload
 	  -ngl 999 ^
-	  --tensor-split 0.25,0.25,0.25,0.25 ^
 	  --port 8080
 
 	set "ERR=%ERRORLEVEL%"
