@@ -66,7 +66,7 @@ The primary test configuration consists of four Tesla K40c GPUs running a modern
 | Configuration | Observed result |
 |---|---:|
 | Four Tesla K40c GPUs | 4-GPU inference |
-| Model | Qwen3.6-35B-A3B, Q8_0 |
+| Model | Unsloth MTP Qwen3.6-35B-A3B, Q8_0 |
 | CUDA Toolkit | 11.8 |
 | Generation throughput after changes | 30ish tps -> 60ish tps PG |
 
@@ -76,42 +76,104 @@ A more systematic benchmark suite covering prompt processing, generation, memory
 
 ## Build Configuration
 
-The current development configuration uses:
+### Prerequisites
 
-- CUDA Toolkit 11.8
-- Visual Studio 2019 C++ build tools on Windows
-- Legacy NVIDIA GPUs with supported compute capabilities
-- An optional experimental NCCL build for multi-GPU communication
+- **CUDA Toolkit:** 11.8
+- **Compiler:** Visual Studio 2019 C++ Build Tools (Windows)
+- **GPU architecture:** Select the compute capabilities you intend to target.
+- **NCCL:** Optional; required only for the experimental NCCL-enabled multi-GPU build.
 
+### 1. Clone the Dependencies
 
-## Quickstart
-- run: git clone https://github.com/ggml-org/llama.cpp/pull/30727
+Obtain the following repositories and resources:
 
-## 1: Download builder of your choice from 
-- download builder "build_gpu_cuda.cmd" from https://github.com/theIvanR/lmstudio-unlocked-backend/tree/main/Generate%20Backends/Windows
-  
-## 3: Enjoy via WEB API
-- go to your build directory and run
-- download your models and set which to use. Open in browser. 
-	```bash
-	@echo off
-	setlocal
+- **llama.cpp legacy GPU compatibility changes:** [PR #30727](https://github.com/ggml-org/llama.cpp/pull/30727)  
+  Contains the CUDA compatibility and performance changes. Use the PR branch or a checkout containing the relevant patches.
 
-	set "LLAMA_EXE=C:\Users\Admin\source\llama.cpp\build_gpu_cuda\bin\llama-server.exe"
-	set "MODEL_DIR=C:\Users\Admin\Documents\LLM Models\lmstudio-community\Qwen3.6-35B-A3B-GGUF"
-	set "MODEL=Qwen3.6-35B-A3B-Q4_K_M.gguf"
-	set "MMPROJ=mmproj-Qwen3.6-35B-A3B-BF16.gguf"
+- **NCCL for Windows:** [theIvanR/nccl-on-windows](https://github.com/theIvanR/nccl-on-windows)  
+  Provides the legacy Windows NCCL build used by the experimental multi-GPU communication path.
 
-	pushd "%MODEL_DIR%" || exit /b 1
+- **Windows build scripts:** [lmstudio-unlocked-backend — Generate Backends/Windows](https://github.com/theIvanR/lmstudio-unlocked-backend/tree/main/Generate%20Backends/Windows)  
+  Provides example scripts for configuring and building the CUDA backend.
 
-	"%LLAMA_EXE%" ^
-	  -m "%MODEL%" ^
-	  --mmproj "%MMPROJ%" ^
-	  --no-mmproj-offload
-	  -ngl 999 ^
-	  --port 8080
+- **Optional — Tesla K40c BIOS unlocker:** [kepler-on-steroids](https://github.com/theIvanR/kepler-on-steroids/)  
+  Relevant if you are using Tesla K40c GPUs and want to experiment with the available BIOS modifications. This is not required to build llama.cpp.
 
-	set "ERR=%ERRORLEVEL%"
-	popd
-	exit /b %ERR%
-	```
+### 2. Configure and Build llama.cpp
+
+1. Open the CUDA/NCCL build script you intend to use, for example `build_gpu_cuda_nccl.cmd`.
+2. **Configure the NCCL paths.** Point the script to your `nccl_all_arch` directory, ensuring that the NCCL header, import library, and DLL paths match the files in your local checkout.
+3. **Select the target GPU architectures.** Edit the architecture list in the build script to match your hardware. For example, use compute capability `35` for the Tesla K40c (Kepler). Add other architectures as needed.
+4. Check that the CUDA Toolkit and Visual Studio toolchain paths are correct.
+5. Run the build script from a command prompt:
+
+   ```bat
+   build_gpu_cuda_nccl.cmd
+   ```
+
+   Adjust the filename if you are using a different builder.
+
+Once compilation completes, locate `llama-server.exe` in the configured build output directory.
+
+**Note:** The NCCL-enabled build is experimental. If you do not need NCCL, you can use a non-NCCL CUDA build instead, provided your selected builder supports it.
+
+### 3. Run Inference
+
+The following is an example Windows batch script for launching a model with `llama-server`. Adjust the executable path, model directory, model filenames, context length, and inference options to suit your system.
+
+```bat
+@echo off
+setlocal
+
+REM Enable CUDA peer-to-peer support where available
+set "GGML_CUDA_P2P=1"
+
+REM Path to the compiled llama.cpp server
+set "LLAMA_EXE=C:\Users\Admin\source\llama.cpp\build_gpu_cuda\bin\llama-server.exe"
+
+REM Directory containing the model and multimodal projector
+set "MODEL_DIR=C:\Users\Admin\Documents\LLM Models\unsloth\Qwen3.6-35B-A3B-MTP-GGUF"
+
+set "MODEL=Qwen3.6-35B-A3B-Q8_0.gguf"
+set "MMPROJ=mmproj-F16.gguf"
+
+pushd "%MODEL_DIR%" || exit /b 1
+
+"%LLAMA_EXE%" ^
+  -m "%MODEL%" ^
+  --mmproj "%MMPROJ%" ^
+  --port 8080 ^
+  -ngl 999 ^
+  -c 65536 ^
+  --fit off ^
+  --load-mode none ^
+  --split-mode tensor ^
+  --spec-type draft-mtp ^
+  --spec-draft-n-max 2
+
+set "ERR=%ERRORLEVEL%"
+popd
+exit /b %ERR%
+```
+
+#### Example configuration notes
+
+- `GGML_CUDA_P2P=1` enables the peer-to-peer setting used by this configuration; actual P2P availability depends on the GPUs, driver, and platform.
+- `-ngl 999` requests offloading as many model layers as possible to the GPUs.
+- `-c 65536` sets a 65,536-token context. Memory requirements depend on the model and cache configuration.
+- `--split-mode tensor` selects tensor-based splitting across GPUs.
+- `--spec-type draft-mtp --spec-draft-n-max 2` enables the example's MTP speculative decoding configuration. The model and build must support the relevant functionality.
+- `--mmproj` supplies the multimodal projector. Omit it if you are running a model that does not require one, and check the options supported by your particular checkout.
+
+**Important:** This is an example launch configuration, not a universal command. Some options may differ between llama.cpp revisions or custom patches. Check `llama-server.exe --help` if an option is rejected.
+
+### 4. Verify the Build
+
+After launching the server:
+
+1. Check the console output for CUDA initialization and GPU offloading.
+2. Confirm that all intended GPUs are detected and used.
+3. Verify that the model loads successfully and produces valid output.
+4. For NCCL builds, test multi-GPU operation and numerical correctness before relying on performance results.
+
+If the build fails, first check the selected compute capabilities, CUDA and compiler paths, and NCCL library locations.
