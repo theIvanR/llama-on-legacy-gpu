@@ -152,7 +152,15 @@ pushd "%MODEL_DIR%" || exit /b 1
   --spec-draft-n-max 2
 
 set "ERR=%ERRORLEVEL%"
+
 popd
+
+REM exit /b %ERR%
+
+echo.
+echo llama-server exit code: %ERR%
+echo.
+pause
 exit /b %ERR%
 ```
 
