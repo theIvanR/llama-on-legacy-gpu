@@ -36,7 +36,7 @@ CUDA graphs can reduce CPU-side launch overhead by capturing and replaying seque
 - Reduces repeated kernel-launch overhead in suitable workloads.
 - Can improve token-generation throughput, particularly in multi-GPU inference configurations.
 
-**Preliminary result:** On a four-GPU Tesla K40c system, enabling the relevant CUDA graph changes increased observed generation throughput from approximately 45 to over 55 tokens/s in the tested workload.
+**Preliminary result:** On a four-GPU Tesla K40c system, enabling the relevant CUDA graph changes increased observed generation throughput from approximately 35 to over 55 tokens/s in the tested workload.
 
 Results are workload- and configuration-dependent and should be treated as preliminary rather than universal performance guarantees.
 
@@ -53,7 +53,7 @@ The implementation addresses API differences and missing functionality in the le
 
 **Important:** This path is experimental. Correct collective ordering, synchronization, graph-capture behavior, and multi-GPU correctness must be validated against the specific NCCL build.
 
-Initial testing showed an approximately 5% end-to-end improvement over the comparison configuration. The result is preliminary and may vary by workload.
+Initial testing showed an approximately 5-10% end-to-end improvement over the comparison configuration. The result is preliminary and may vary by workload achieving up to approx 60tps.
 
 ### 4. Multi-GPU Inference on Older Hardware
 
@@ -68,7 +68,7 @@ The primary test configuration consists of four Tesla K40c GPUs running a modern
 | Four Tesla K40c GPUs | 4-GPU inference |
 | Model | Unsloth MTP Qwen3.6-35B-A3B, Q8_0 |
 | CUDA Toolkit | 11.8 |
-| Generation throughput after changes | 30ish tps -> 60ish tps PG |
+| Generation throughput after changes | approx 35 tps -> approx 60ish PG |
 
 These figures describe a specific test system and workload. They are not directly comparable to results obtained with different models, quantizations, context lengths, drivers, or GPU configurations.
 
